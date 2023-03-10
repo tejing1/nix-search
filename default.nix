@@ -1,8 +1,6 @@
 { pkgs ? import <nixpkgs> {}
 , resholve ? pkgs.resholve
 , bash ? pkgs.bash
-, coreutils ? pkgs.coreutils
-, gnugrep ? pkgs.gnugrep
 , gnused ? pkgs.gnused
 , faketty ? pkgs.faketty
 }:
@@ -24,8 +22,6 @@ resholve.mkDerivation {
     scripts = [ "bin/nix-search" ];
     interpreter = "${bash}/bin/bash";
     inputs = [
-      coreutils
-      gnugrep
       gnused
       faketty
     ];
