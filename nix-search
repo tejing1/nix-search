@@ -1,0 +1,47 @@
+#! /usr/bin/env bash
+
+reverse_array() {
+    # first argument is the array to reverse
+    # second is the output array
+    declare -n arr="$1" rev="$2"
+    for i in "${arr[@]}"
+    do
+        rev=("$i" "${rev[@]}")
+    done
+}
+
+flakes_enabled() {
+    local conffiles=()
+    if [ -r "${NIX_CONF_DIR:-/etc/nix}/nix.conf" ]; then
+        conffiles+=("${NIX_CONF_DIR:-/etc/nix}/nix.conf")
+    fi
+    if [ -n "$NIX_USER_CONF_FILES" ]; then
+        local tmparray=()
+        local tmprev=()
+        IFS=':' read -ra tmparray <<< "$NIX_USER_CONF_FILES"
+        reverse_array tmparray tmprev
+        conffiles+=("${tmprev[@]}")
+    else
+        local tmparray=()
+        local tmprev=()
+        IFS=':' read -ra tmparray <<< "${XDG_CONFIG_DIRS:-/etc/xdg}:${XDG_CONFIG_HOME:-$HOME/.config}"
+        reverse_array tmparray tmprev
+        for d in "${tmprev[@]}"; do
+            [ -r "$d/nix/nix.conf" ] && conffiles+=("$d/nix/nix.conf")
+        done
+    fi
+    if [ -n "$NIX_CONFIG" ]; then
+        conffiles+=("$NIX_CONFIG")
+    fi
+    egrep -q 'experimental-features +=.*flakes' -- "${conffiles[@]}"
+}
+
+filter_results() {
+    sed -uE 's/legacyPackages.(aarch64-darwin|aarch64-linux|armv5tel-linux|armv6l-linux|armv7l-linux|i686-linux|mipsel-linux|powerpc64le-linux|riscv64-linux|x86_64-darwin|x86_64-linux).//g'
+}
+
+if flakes_enabled; then
+    script --quiet --return --command 'nix search nixpkgs -- '"${*@Q}"' 2>/dev/null' /dev/null | filter_results
+else
+    script --quiet --return --command 'nix --extra-experimental-features flakes --extra-experimental-features nix-command search --impure --expr '\''{ legacyPackages.${builtins.currentSystem} = import <nixpkgs> {};}'\'' '\'\'' -- '"${*@Q}"' 2>/dev/null' | filter_results
+fi
