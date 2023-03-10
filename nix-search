@@ -41,7 +41,7 @@ filter_results() {
 }
 
 if flakes_enabled; then
-    script --quiet --return --command 'nix search nixpkgs -- '"${*@Q}"' 2>/dev/null' /dev/null | filter_results
+    faketty nix search nixpkgs -- "$@" 2>/dev/null | filter_results
 else
-    script --quiet --return --command 'nix --extra-experimental-features flakes --extra-experimental-features nix-command search --impure --expr '\''{ legacyPackages.${builtins.currentSystem} = import <nixpkgs> {};}'\'' '\'\'' -- '"${*@Q}"' 2>/dev/null' | filter_results
+    faketty nix --extra-experimental-features 'nix-command flakes' search --impure --expr '{ legacyPackages.${builtins.currentSystem} = import <nixpkgs> {};}' '' -- "$@" 2>/dev/null | filter_results
 fi

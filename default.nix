@@ -4,7 +4,7 @@
 , coreutils ? pkgs.coreutils
 , gnugrep ? pkgs.gnugrep
 , gnused ? pkgs.gnused
-, util-linux ? pkgs.util-linux
+, faketty ? pkgs.faketty
 }:
 
 resholve.mkDerivation {
@@ -27,7 +27,10 @@ resholve.mkDerivation {
       coreutils
       gnugrep
       gnused
-      util-linux
+      faketty
+    ];
+    execer = [
+      "cannot:${faketty}/bin/faketty" # FALSE! But I only use it to call nix, which I wanted to get from PATH anyway.
     ];
   };
 }
